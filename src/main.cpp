@@ -27,26 +27,30 @@
 
 #include <iostream>
 
-using namespace std;
+#include <ihex.h>
 
-extern "C" {
-	/* Call C function */
-	int add32(int a, int b);
-}
+using namespace std;
+using namespace ihex;
 
 int main(int argc, char *argv[])
 {
 	(void)argc;
 	(void)argv;
+	cout << "Hello World!" << endl;
 
-	string compiler = "None";
-#ifdef __clang__
-	compiler = "CLANG";
-#elif defined(__GNUC__)
-	compiler = "GNU";
-#endif
-	
-	cout << "Hello world " << add32(10, 20) << "," << compiler << endl;
+	if(1 == argc) {
+		cout << "Please specify the filename." << endl;
+		return -1;
+	}
+
+	string filename = argv[1];
+	IHex hex_obj = IHex(filename);
+	if(hex_obj.is_valid()) {
+		cout << "File is valid." << endl;
+	}
+	else {
+		cout << "File is invalid." << endl;
+	}
 
 	return 0;
 }
