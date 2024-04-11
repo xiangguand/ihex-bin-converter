@@ -35,42 +35,47 @@ namespace ihex
 {
 using namespace std;
 
-
 class binData {
     public:
-    binData() {}
-    uint64_t start_addr = 0;
-    vector<uint8_t> bin;
+	binData()
+	{
+	}
+	uint64_t start_addr = 0;
+	vector<uint8_t> bin;
 };
 
 class IHex {
     public:
-    /* Declare iHex record type */
-    enum RecordType {
-        DATA = 0x00,
-        END_OF_FILE = 0x01,
-        EXTENDED_SEGMENT_ADDRESS = 0x02,
-        START_SEGMENT_ADDRESS = 0x03,
-        EXTENDED_LINEAR_ADDRESS = 0x04,
-        START_LINEAR_ADDRESS = 0x05
-    };
-
+	/* Declare iHex record type */
+	enum RecordType {
+		DATA = 0x00,
+		END_OF_FILE = 0x01,
+		EXTENDED_SEGMENT_ADDRESS = 0x02,
+		START_SEGMENT_ADDRESS = 0x03,
+		EXTENDED_LINEAR_ADDRESS = 0x04,
+		START_LINEAR_ADDRESS = 0x05
+	};
 
 	IHex();
 	IHex(string filename);
-    vector<string> read_hex_file(string filename);
+	vector<string> read_hex_file(string filename);
 	void parse_hex_string(vector<string> hex_string);
-    void parse_hex_line(string line);
-    uint8_t calculate_checksum(string line);
-    bool check_checksum(string line);
+	void parse_hex_line(string line);
+	uint8_t calculate_checksum(string line);
+	uint8_t get_byte_count(string line);
+	uint16_t get_address(string line);
+	uint8_t get_record_type(string line);
+	void get_data(string line, vector<uint8_t> &data);
+	bool check_checksum(string line);
 	void feed_bin(vector<uint8_t> bin);
 	bool is_valid();
-	void write_bin();
+	void write_bin(string filename);
 	void write_hex(string filename);
 
     private:
-    bool parse_flag = false;
-    vector<binData> bin_files;
+	bool parse_flag = false;
+	vector<binData> bin_files;
+    binData bin_data;
 };
 
 } /* namespace ihex */

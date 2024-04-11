@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	IHex hex_obj = IHex(filename);
 	if(hex_obj.is_valid()) {
 		cout << "File is valid." << endl;
+		hex_obj.write_bin("test");
 	}
 	else {
 		cout << "File is invalid." << endl;

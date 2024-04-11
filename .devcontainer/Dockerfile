@@ -6,4 +6,5 @@ RUN apt-get update && apt-get install -y \
     g++ \
     clang \
     cmake \
-    ninja-build
+    ninja-build \
+    clang-format
