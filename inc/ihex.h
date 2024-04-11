@@ -58,6 +58,7 @@ class IHex {
 
 	IHex();
 	IHex(string filename);
+	IHex(vector<string> bin_filenames, vector<string> bin_offsets);
 	vector<string> read_hex_file(string filename);
 	void parse_hex_string(vector<string> hex_string);
 	void parse_hex_line(string line);
@@ -74,6 +75,7 @@ class IHex {
 
     private:
 	bool parse_flag = false;
+	bool valid_flag = true;
 	vector<binData> bin_files;
     binData bin_data;
 };

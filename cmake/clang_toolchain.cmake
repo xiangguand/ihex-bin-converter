@@ -2,8 +2,14 @@
 set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 
 # Set the compiler to Clang
-set(CMAKE_C_COMPILER clang)
-set(CMAKE_CXX_COMPILER clang++)
+find_program(CLANG_EXECUTABLE NAMES clang)
+find_program(CLANGXX_EXECUTABLE NAMES clang++)
+if(CLANG_EXECUTABLE AND CLANGXX_EXECUTABLE)
+    set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
+    set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
+else()
+    message(FATAL_ERROR "Clang compiler not found.")
+endif()
 
 # Set the path to the compiler
 set(CMAKE_FIND_ROOT_PATH /path/to/clang/installation)

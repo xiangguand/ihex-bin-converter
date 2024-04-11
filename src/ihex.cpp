@@ -38,10 +38,13 @@ using namespace ihex;
 IHex::IHex()
 {
 	parse_flag = false;
+	valid_flag = true;
 }
 
 IHex::IHex(string filename)
 {
+	parse_flag = false;
+	valid_flag = true;
 	/* Read file and parse it */
 	vector<string> lines;
 	lines = read_hex_file(filename);
@@ -51,6 +54,11 @@ IHex::IHex(string filename)
 	parse_hex_string(lines);
 }
 
+IHex::IHex(vector<string> bin_filenames, vector<string> bin_offsets)
+{
+
+}
+
 vector<string> IHex::read_hex_file(string filename)
 {
 	vector<string> lines;
@@ -58,23 +66,24 @@ vector<string> IHex::read_hex_file(string filename)
 
 	if (file.is_open() == false) {
 		cout << "File not found!" << endl;
+		valid_flag = false;
 		return lines;
 	}
 
 	string line = "";
-    char ch;
-    while(file.read(&ch, 1)) {
-        if(ch =='\r' || ch == '\n') {
-            if(line.size() > 0) {
-                lines.push_back(line);
-                line = "";
-            }
-        }
-        else {
-            line += ch;
-        }
-    }
+	char ch;
+	while (file.read(&ch, 1)) {
+		if (ch == '\r' || ch == '\n') {
+			if (line.size() > 0) {
+				lines.push_back(line);
+				line = "";
+			}
+		} else {
+			line += ch;
+		}
+	}
 	file.close();
+	parse_flag = true;
 
 	return lines;
 }
@@ -89,11 +98,11 @@ void IHex::parse_hex_string(vector<string> lines)
 void IHex::parse_hex_line(string line)
 {
 	vector<uint8_t> addr;
-    if(false == check_checksum(line)) {
-        cout << "CHECKSUM ERROR " << line << endl;
-        cout << "Pass this line" << endl;
-    }
-	else if (':' == line[0]) {
+	if (false == check_checksum(line)) {
+		cout << "CHECKSUM ERROR " << line << endl;
+		cout << "Pass this line" << endl;
+		valid_flag = false;
+	} else if (':' == line[0]) {
 		switch (get_record_type(line)) {
 		case IHex::RecordType::DATA:
 			/* code */
@@ -104,7 +113,7 @@ void IHex::parse_hex_line(string line)
 		case IHex::RecordType::END_OF_FILE:
 			/* code */
 			cout << "END OF FILE " << line << endl;
-			if(bin_data.bin.size() > 0) {
+			if (bin_data.bin.size() > 0) {
 				bin_files.push_back(bin_data);
 			}
 			break;
@@ -119,19 +128,20 @@ void IHex::parse_hex_line(string line)
 		case IHex::RecordType::EXTENDED_LINEAR_ADDRESS:
 			/* code */
 			cout << "EXTENDED LINEAR ADDRESS " << line << endl;
-			if(bin_data.bin.size() > 0) {
+			if (bin_data.bin.size() > 0) {
 				bin_files.push_back(bin_data);
 			}
 			bin_data.bin.clear();
 			bin_data.start_addr = 0;
-			
+
 			get_data(line, addr);
-			for(int i=0;i<addr.size();i++) {
+			for (int i = 0; i < (int)addr.size(); i++) {
 				bin_data.start_addr <<= 8;
 				bin_data.start_addr |= addr[i];
 			}
 			bin_data.start_addr <<= 16;
-			cout << "Start address: " << hex << bin_data.start_addr << dec << endl;
+			cout << "Start address: " << hex << bin_data.start_addr
+			     << dec << endl;
 			break;
 		case IHex::RecordType::START_LINEAR_ADDRESS:
 			/* code */
@@ -182,6 +192,7 @@ bool IHex::check_checksum(string line)
 	if (checksum == stoi(line.substr(line.size() - 2, 2), nullptr, 16)) {
 		return true;
 	}
+
 	return false;
 }
 
@@ -191,22 +202,21 @@ void IHex::feed_bin(vector<uint8_t> bin)
 
 bool IHex::is_valid()
 {
-	return true;
+	return valid_flag;
 }
 
 void IHex::write_bin(string filename)
 {
-	for(auto wbin: bin_files) {
+	for (auto wbin : bin_files) {
 		std::stringstream stream;
-    	stream << std::hex << wbin.start_addr;
+		stream << std::hex << wbin.start_addr;
 		string bin_filename = filename + "_" + stream.str() + ".bin";
 
 		cout << "Write " << bin_filename << endl;
 		ofstream bin_file(bin_filename, ios::binary);
-		bin_file.write((char*)wbin.bin.data(), wbin.bin.size());
+		bin_file.write((char *)wbin.bin.data(), wbin.bin.size());
 		bin_file.close();
 	}
-	
 }
 
 void IHex::write_hex(string filename)

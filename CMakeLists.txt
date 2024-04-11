@@ -13,7 +13,8 @@ endif()
 include(${CMAKE_TOOLCHAIN_FILE})
 
 set(CMAKE_C_STANDARD 99)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(CODE_COVERAGE ON)
 option(USE_WARNING_FLAGS ON)
@@ -61,26 +62,6 @@ endif()
 string(REPLACE ";" " " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-# SET(CFLAGS
-#     -Waddress
-#     -Waggregate-return
-#     -Wformat-nonliteral
-#     -Wformat-security
-#     -Wformat
-#     -Winit-self
-#     -Wmissing-declarations
-#     -Wmissing-include-dirs
-#     -Wno-multichar
-#     -Wno-parentheses
-#     -Wno-type-limits
-#     -Wno-unused-parameter
-#     -Wunreachable-code
-#     -Wwrite-strings
-#     -Wpointer-arith
-#     # -Werror
-#     -Wall
-# )
-
 # set(LDFLAGS
 
 #     )
@@ -89,11 +70,7 @@ set(DEPEN_DIR
 )
 
 
-# add_compile_options(${CFLAGS})
-# add_link_options(${LDFLAGS})
-
-
-set(DEPEN_DIR
+set(DEPEN_DIR PUBLIC
     ${DEPEN_DIR}
 )
 
@@ -115,15 +92,24 @@ set(SOURCE_FILE
   ${ASMSRC} 
 )
 
+list(FILTER SOURCE_FILE EXCLUDE REGEX "main.c")
+list(FILTER SOURCE_FILE EXCLUDE REGEX "main.cpp")
+
+add_library(SORUCE_LIB OBJECT ${SOURCE_FILE})
+target_include_directories(SORUCE_LIB PUBLIC ${DEPEN_DIR})
+
+
 # generate the main executable ifle
-add_executable(${PROJECT_NAME} ${SOURCE_FILE})
+add_executable(${PROJECT_NAME} src/main.cpp)
 
 # Include reference
 target_include_directories(${PROJECT_NAME} PUBLIC ${DEPEN_DIR})
 
-
 # library directory
 target_link_libraries(${PROJECT_NAME} PUBLIC
     m
+    SORUCE_LIB
 )
 
+# Test
+add_subdirectory(test)

@@ -7,4 +7,5 @@ RUN apt-get update && apt-get install -y \
     clang \
     cmake \
     ninja-build \
-    clang-format
+    clang-format \
+    libgtest-dev
