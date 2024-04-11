@@ -5,6 +5,15 @@ set(CMAKE_SYSTEM_NAME ${CMAKE_HOST_SYSTEM_NAME})
 set(CMAKE_C_COMPILER gcc)
 set(CMAKE_CXX_COMPILER g++)
 
+find_program(CLANG_EXECUTABLE NAMES gcc)
+find_program(CLANGXX_EXECUTABLE NAMES g++)
+if(CLANG_EXECUTABLE AND CLANGXX_EXECUTABLE)
+    set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
+    set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
+else()
+    message(FATAL_ERROR "Clang compiler not found.")
+endif()
+
 # Set other compiler flags as needed.
 set(CMAKE_C_FLAGS 
     -Waddress

@@ -45,3 +45,5 @@ _deps
 
 build
 
+.vscode
+*.bin

@@ -1,8 +1,12 @@
-[![Tests](https://github.com/xiangguand/c_cxx_template/actions/workflows/test.yaml/badge.svg)](https://github.com/xiangguand/c_cxx_template/actions/workflows/test.yaml)
+[![Tests](https://github.com/xiangguand/ihex-bin-converter/actions/workflows/test.yaml/badge.svg)](https://github.com/xiangguand/ihex-bin-converter/actions/workflows/test.yaml)
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 TODO
+
+* test00.hex:
+    * 0x08000000
+    * 0x00200000
 
 
 ### Built With
