@@ -17,8 +17,8 @@
  *
  * \file     ihex.h
  * \brief    Index hex format converter.
- * \version  v1.0.0
- * \date     10. April. 2023
+ * \version  v1.0.1
+ * \date     12. April. 2024
  *
  * \author   Xiang-Guan Deng
  *
@@ -28,6 +28,8 @@
 #ifndef IHEX_H_
 #define IHEX_H_
 
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 
@@ -58,8 +60,17 @@ class IHex {
 
 	IHex();
 	IHex(string filename);
-	IHex(vector<string> bin_filenames, vector<string> bin_offsets);
+	IHex(vector<string> bin_filenames, vector<string> bin_offsets,
+	     string hex_filename, uint32_t __main_addresss=0xFFFFFFFF);
+	void write_hex(vector<string> bin_filenames,
+			     vector<string> bin_offsets, string hex_filename,
+			     uint32_t __main_address);
+	void write_extended_linear_address(uint32_t address, ofstream &wf);
+	void write_start_linear_address(uint32_t address, ofstream &wf);
+	void write_data(vector<uint8_t> data, ofstream &wf);
+	void write_endfile(ofstream &wf);
 	vector<string> read_hex_file(string filename);
+	vector<uint8_t> read_bin_file(string filename);
 	void parse_hex_string(vector<string> hex_string);
 	void parse_hex_line(string line);
 	uint8_t calculate_checksum(string line);
@@ -68,16 +79,16 @@ class IHex {
 	uint8_t get_record_type(string line);
 	void get_data(string line, vector<uint8_t> &data);
 	bool check_checksum(string line);
-	void feed_bin(vector<uint8_t> bin);
 	bool is_valid();
 	void write_bin(string filename);
-	void write_hex(string filename);
 
     private:
 	bool parse_flag = false;
 	bool valid_flag = true;
 	vector<binData> bin_files;
-    binData bin_data;
+	binData bin_data;
+	ofstream file;
+	uint32_t __main_address_ = 0xFFFFFFFF;
 };
 
 } /* namespace ihex */

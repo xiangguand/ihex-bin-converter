@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(main)
+project(hex_bin_converter)
 
 if(USE_CLANG)
     message(STATUS "Using clang compiler")
