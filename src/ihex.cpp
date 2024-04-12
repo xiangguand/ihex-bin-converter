@@ -210,7 +210,7 @@ vector<string> IHex::read_hex_file(string filename)
 	ifstream file(filename);
 
 	if (file.is_open() == false) {
-		cout << "File not found!" << endl;
+		cout << "File not found! -- " << filename << endl;
 		valid_flag = false;
 		return lines;
 	}
@@ -239,7 +239,7 @@ vector<uint8_t> IHex::read_bin_file(string filename)
 	ifstream file(filename, ios::binary);
 
 	if (file.is_open() == false) {
-		cout << "File not found!" << endl;
+		cout << "File not found! -- " << filename << endl;
 		valid_flag = false;
 		return data;
 	}
