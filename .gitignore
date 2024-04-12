@@ -47,3 +47,6 @@ build
 
 .vscode
 *.bin
+
+!patterns/answer_200000.bin
+!patterns/answer_8000000.bin
