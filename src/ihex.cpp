@@ -31,9 +31,23 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
+#include <cctype>
 
 using namespace std;
 using namespace ihex;
+
+static void write___main_address(uint32_t __main_address)
+{
+	ofstream file;
+	file.open("__main_address.txt");
+	if (file.is_open() == false) {
+		cout << "File cannot open!" << endl;
+		return;
+	}
+	file << hex << "0x" << __main_address;
+	file.close();
+}
 
 IHex::IHex()
 {
@@ -54,9 +68,140 @@ IHex::IHex(string filename)
 	parse_hex_string(lines);
 }
 
-IHex::IHex(vector<string> bin_filenames, vector<string> bin_offsets)
+IHex::IHex(vector<string> bin_filenames, vector<string> bin_offsets,
+	   string hex_filename, uint32_t __main_address)
 {
+	write_hex(bin_filenames, bin_offsets, hex_filename, __main_address);
+}
 
+void IHex::write_hex(vector<string> bin_filenames, vector<string> bin_offsets,
+		     string hex_filename, uint32_t __main_address)
+{
+	// EXTENDED LINEAR ADDRESS 0
+	// DATA...
+	// EXTENDED LINEAR ADDRESS 1
+	// DATA...
+	// START LINEAR ADDRESS
+	// END OF FILE
+
+	unsigned long n = bin_filenames.size();
+	if (n != bin_offsets.size()) {
+		cout << "Number of bin files and offsets are not equal!"
+		     << endl;
+		valid_flag = false;
+		return;
+	}
+
+	file = ofstream(hex_filename);
+	if (file.is_open() == false) {
+		cout << "File cannot open!" << endl;
+		valid_flag = false;
+		return;
+	}
+
+	for (unsigned long i = 0; i < n; i++) {
+		write_extended_linear_address(stoi(bin_offsets[i], nullptr, 16),
+					      file);
+		write_data(read_bin_file(bin_filenames[i]), file);
+	}
+
+	if (__main_address != 0xFFFFFFFF) {
+		write_start_linear_address(__main_address, file);
+	}
+
+	write_endfile(file);
+	file.close();
+}
+
+void IHex::write_extended_linear_address(uint32_t address, ofstream &wf)
+{
+	stringstream ss;
+	ss << ":02000004" << hex << setw(4) << setfill('0') << (address >> 16);
+
+	string temp = ss.str() + "00";
+	uint32_t chksum = calculate_checksum(temp);
+
+	ss << hex << setw(2) << setfill('0') << chksum << '\r' << endl;
+
+	string hexString = ss.str();
+	transform(hexString.begin(), hexString.end(), hexString.begin(),
+		  [](unsigned char c) { return std::toupper(c); });
+
+	wf << hexString;
+}
+
+void IHex::write_start_linear_address(uint32_t address, ofstream &wf)
+{
+	stringstream ss;
+	ss << ":04000005" << hex << setw(8) << setfill('0') << address;
+
+	string temp = ss.str() + "00";
+	uint32_t chksum = calculate_checksum(temp);
+
+	ss << hex << setw(2) << setfill('0') << chksum << '\r' << endl;
+
+	string hexString = ss.str();
+	transform(hexString.begin(), hexString.end(), hexString.begin(),
+		  [](unsigned char c) { return std::toupper(c); });
+
+	wf << hexString;
+}
+
+void IHex::write_data(vector<uint8_t> data, ofstream &wf)
+{
+	stringstream ss;
+
+	unsigned long n = data.size();
+	unsigned long ws = 0;
+
+	while ((ws + 1) * 16 < n) {
+		stringstream ss;
+		ss << hex << ":10" << setw(4) << setfill('0') << ws * 16
+		   << "00";
+		for (unsigned long i = ws * 16; i < (ws + 1) * 16; i++) {
+			ss << setw(2) << setfill('0') << hex << (int)data[i];
+		}
+
+		string temp = ss.str() + "00";
+		uint32_t chksum = calculate_checksum(temp);
+
+		ss << hex << setw(2) << setfill('0') << chksum << '\r' << endl;
+		string hexString = ss.str();
+		transform(hexString.begin(), hexString.end(), hexString.begin(),
+			  [](unsigned char c) { return std::toupper(c); });
+
+		wf << hexString;
+
+		ws++;
+	}
+	if (ws * 16 < n) {
+		unsigned int residual_bytes = n - ws * 16;
+		stringstream ss;
+		ss << hex << ":" << setw(2) << setfill('0') << residual_bytes
+		   << setw(4) << setfill('0') << ws * 16 << "00";
+		for (unsigned int i = ws * 16; i < n; i++) {
+			ss << setw(2) << setfill('0') << hex << (int)data[i];
+		}
+		string temp = ss.str() + "00";
+		uint32_t chksum = calculate_checksum(temp);
+		ss << hex << setw(2) << setfill('0') << chksum << '\r' << endl;
+		string hexString = ss.str();
+		transform(hexString.begin(), hexString.end(), hexString.begin(),
+			  [](unsigned char c) { return std::toupper(c); });
+
+		wf << hexString;
+	}
+}
+
+void IHex::write_endfile(ofstream &wf)
+{
+	stringstream ss;
+	ss << ":00000001FF" << '\r' << endl;
+	string hexString = ss.str();
+	transform(hexString.begin(), hexString.end(), hexString.begin(),
+		  [](unsigned char c) { return std::toupper(c); });
+
+	wf << hexString;
 }
 
 vector<string> IHex::read_hex_file(string filename)
@@ -86,6 +231,26 @@ vector<string> IHex::read_hex_file(string filename)
 	parse_flag = true;
 
 	return lines;
+}
+
+vector<uint8_t> IHex::read_bin_file(string filename)
+{
+	vector<uint8_t> data;
+	ifstream file(filename, ios::binary);
+
+	if (file.is_open() == false) {
+		cout << "File not found!" << endl;
+		valid_flag = false;
+		return data;
+	}
+
+	char ch;
+	while (file.read(&ch, 1)) {
+		data.push_back(ch);
+	}
+	file.close();
+
+	return data;
 }
 
 void IHex::parse_hex_string(vector<string> lines)
@@ -146,6 +311,8 @@ void IHex::parse_hex_line(string line)
 		case IHex::RecordType::START_LINEAR_ADDRESS:
 			/* code */
 			cout << "START LINEAR ADDRESS " << line << endl;
+			__main_address_ = stoul(line.substr(9, 8), nullptr, 16);
+			write___main_address(__main_address_);
 			break;
 		}
 	} else {
@@ -196,10 +363,6 @@ bool IHex::check_checksum(string line)
 	return false;
 }
 
-void IHex::feed_bin(vector<uint8_t> bin)
-{
-}
-
 bool IHex::is_valid()
 {
 	return valid_flag;
@@ -217,8 +380,4 @@ void IHex::write_bin(string filename)
 		bin_file.write((char *)wbin.bin.data(), wbin.bin.size());
 		bin_file.close();
 	}
-}
-
-void IHex::write_hex(string filename)
-{
 }

@@ -16,9 +16,9 @@
  * -----------------------------------------------------------------------------
  *
  * \file     main.cpp
- * \brief    Example main function. In this function, it will call C function and try to execute it.
- * \version  v1.0.0
- * \date     08. April. 2023
+ * \brief    HEX to BIN converter or BIN to HEX converter.
+ * \version  v1.0.1
+ * \date     12. April. 2024
  *
  * \author   Xiang-Guan Deng
  *
@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
 {
 	(void)argc;
 	(void)argv;
-	cout << "Hello World!" << endl;
 
 	if (1 == argc) {
 		cout << "Please specify the filename." << endl;
@@ -52,6 +51,7 @@ int main(int argc, char *argv[])
 	string bin_to_hex_filename = "bin.hex";
 	vector<string> bin_filenames;
 	vector<string> bin_offsets;
+	uint32_t __main_address = 0xFFFFFFFF;
 
 	int mode = 0;
 	// 1 -> hex to bin
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
 	int i = 1;
 	while (i < argc) {
-		cout << argv[i] << endl;
+		// cout << i << "," << argv[i] << endl;
 		if (argv[i] == string("-h")) {
 			cout << "Usage:  -h | Print help message" << endl;
 			cout << "        -hex {filename} | Filename of input hex provided and tag is \"test\" "
@@ -68,51 +68,52 @@ int main(int argc, char *argv[])
 			     << endl;
 			cout << "        -bin {bin filename} {offset(hex)} | Filename of input bin and offset is base of bin. It can pass multible bin file"
 			     << endl;
-			cout << "        -o {filename} | Filename of output all bin and offset provided."
+			cout << "        -o   {filename} | Filename of output all bin and offset provided."
+			     << endl;
+			cout << "        -m   {adress}   | Keil __main function address."
 			     << endl;
 			return 0;
-		} else if (argv[i] == string("-hex")) {
+		} else if (0 == mode && argv[i] == string("-hex")) {
 			if (i + 1 < argc) {
 				cout << "Filename is " << argv[i + 1] << endl;
 				hex_filename = string(argv[i + 1]);
 			}
 			mode = 1;
 			break;
-		} else if (argv[i] == string("-bin")) {
-			if (i + 2 >= argc) {
-				cout << "Invalid command." << endl;
-				return -1;
-			} else {
-				while (i + 2 < argc) {
-					cout << "Filename is " << argv[i + 1]
-					     << endl;
-					cout << "Offset is " << argv[i + 2]
-					     << endl;
-					bin_filenames.push_back(
-						string(argv[i + 1]));
-					bin_offsets.push_back(
-						string(argv[i + 2]));
-					i += 2;
-				}
-			}
+		} else if (0 == mode && argv[i] == string("-bin")) {
 			i++;
 			mode = 2;
 		} else if (argv[i] == string("-o")) {
+			// cout << "Output " << endl;
 			if (i + 1 < argc) {
 				cout << "Filename is " << argv[i + 1] << endl;
 				bin_to_hex_filename = string(argv[i + 1]);
 			}
+			i += 2;
+		} else if (argv[i] == string("-m")) {
+			// cout << "Output " << endl;
+			if (i + 1 < argc) {
+				__main_address = strtoul(argv[i + 1], NULL, 16);
+			}
+			i += 2;
+		} else if (2 == mode) {
+			if (i + 2 > argc) {
+				cout << "Invalid command." << endl;
+				return -1;
+			}
+			bin_filenames.push_back(string(argv[i]));
+			bin_offsets.push_back(string(argv[i + 1]));
 			i += 2;
 		} else {
 			return -2;
 		}
 	}
 
-	
-	if(0 == mode) {
+	if (0 == mode) {
 		cout << "Invalid command." << endl;
-	}
-	else if(1 == mode) {
+	} else if (1 == mode) {
+		/* Start handling HEX to BIN conversion. */
+		cout << "Convert HEX to BIN" << endl;
 		IHex hex_obj = IHex(hex_filename);
 		if (hex_obj.is_valid()) {
 			cout << "File is valid." << endl;
@@ -120,10 +121,20 @@ int main(int argc, char *argv[])
 		} else {
 			cout << "File is invalid." << endl;
 		}
-	}
-	else {
-		// bin
-		IHex hex_obj = IHex(bin_filenames, bin_offsets);
+	} else {
+		/* Start handling BIN to HEX conversion. */
+		cout << "Convert BIN to HEX" << endl;
+		for (int i = 0; i < (int)bin_filenames.size(); i++) {
+			cout << "File is " << bin_filenames[i]
+			     << " with offset " << bin_offsets[i] << endl;
+		}
+		cout << "Output file is " << bin_to_hex_filename << endl;
+		if(0xFFFFFFFF == __main_address) {
+			IHex hex_obj = IHex(bin_filenames, bin_offsets, bin_to_hex_filename);
+		}
+		else {
+			IHex hex_obj = IHex(bin_filenames, bin_offsets, bin_to_hex_filename, __main_address);
+		}
 	}
 
 	return 0;
